@@ -29,7 +29,7 @@ import subprocess
 import sys
 import time
 
-# import analyze_results
+import analyze_results
 # import compile_workbook
 
 
@@ -86,9 +86,8 @@ def batch_process(image_folder):
                     )
 
     # Process the ImageJ results
-    # for folder in os.listdir("DMI/results"):
-    #     if folder.endswith("0hr"):
-    #         analyze_results.main(f"ImageJ/DMI/results/{folder}")
+    for folder in os.listdir("DMI/results"):
+        analyze_results.main(f"ImageJ/DMI/results/{folder}")
 
     # Compile the results into a workbook
     # compile_workbook.main()
