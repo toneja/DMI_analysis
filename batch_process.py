@@ -30,7 +30,7 @@ import sys
 import time
 
 import analyze_results
-# import compile_workbook
+import compile_workbook
 
 
 def batch_process(image_folder):
@@ -90,7 +90,7 @@ def batch_process(image_folder):
         analyze_results.main(f"ImageJ/DMI/results/{folder}")
 
     # Compile the results into a workbook
-    # compile_workbook.main()
+    compile_workbook.main()
 
     # Calculate the elapsed time
     elapsed_time = time.time() - start_time
