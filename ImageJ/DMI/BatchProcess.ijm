@@ -11,7 +11,7 @@ for (i = 0; i < list.length; i++) {
         open(inputFolder + "/" + list[i]);
         
         // Execute our main macro
-        runMacro("../GPM/AnalyzeSporesAndGermlings-35mm.ijm");
+        runMacro("../DMI/AnalyzeSporesAndGermlings-35mm.ijm");
         
         // Close the image
         close();
