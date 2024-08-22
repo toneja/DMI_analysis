@@ -17,4 +17,4 @@ minarea = 300
 maxarea = 2000
 run("Analyze Particles...", "size=minarea-maxarea circularity=0.00-0.99 show=Overlay display exclude include add");
 roiManager("Show None");
-saveAs("Results", "GPM/results/" + File.getNameWithoutExtension(getTitle()) + ".csv");
+saveAs("Results", "DMI/results/" + File.getNameWithoutExtension(getTitle()) + ".csv");
