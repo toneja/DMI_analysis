@@ -28,7 +28,6 @@ import os
 import sys
 import pandas
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 
 # globals
 REGR = ""
@@ -37,17 +36,33 @@ REGR = ""
 def setup_regression(model):
     """Setup the logistic regressions used to determine ROI identity."""
     dataset = pandas.read_csv(f"models/{model}_training_data.csv")
-    _x = StandardScaler().fit_transform(
-        dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
-    )
+    _x = dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
     _y = dataset["class"]
 
     regression = LogisticRegression(
-        multi_class="multinomial", solver="lbfgs", max_iter=1000
+        multi_class="multinomial", solver="saga", max_iter = 5000,
     )
-    regression.fit(_x, _y)
+    regression.fit(_x.values, _y)
 
     return regression
+
+
+def identify_roi(row):
+    """A descriptive docstring belongs here."""
+    prediction = REGR.predict(
+        [
+            [
+                float(row["Perim."]),
+                float(row["Major"]),
+                float(row["Minor"]),
+                float(row["Feret"]),
+                float(row["MinFeret"]),
+                float(row["Round"]),
+                float(row["Solidity"]),
+            ]
+        ]
+    )
+    print(f"{prediction}")
 
 
 def analyze_results(folder):
@@ -71,12 +86,13 @@ def csv_handler(input_file):
         # read csv as a dict so header is skipped and value lookup is simpler
         csv_reader = csv.DictReader(csv_file, delimiter=",")
         for row in csv_reader:
-            image_data += 1
+            identify_roi(row)
     return image_data
 
 
 def main(folder):
     """Execute the main objective."""
+    global REGR
     os.chdir(os.path.dirname(__file__))
     REGR = setup_regression("appressoria")
     analyze_results(folder)
