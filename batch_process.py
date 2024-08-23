@@ -24,6 +24,7 @@
 """
 
 
+import glob
 import os
 import subprocess
 import sys
@@ -39,6 +40,15 @@ def batch_process(image_folder):
     start_time = time.time()
     # Count how many albums are processed
     processed = 0
+    # Clean out any stale results files
+    _ = [
+        os.remove(file)
+        for file in glob.glob(os.path.join(f"{os.path.dirname(__file__)}/results", "*"))
+    ]
+    # Also nuke old workbooks
+    workbook_file = f"{os.path.dirname(__file__)}/DMIFungicideAssay_Workbook.xlsx"
+    if os.path.exists(workbook_file):
+        os.remove(workbook_file)
     # Work inside the ImageJ directory
     os.chdir(f"{os.path.dirname(__file__)}/ImageJ")
     # Iterate through the image folders
