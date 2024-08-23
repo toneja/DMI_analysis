@@ -28,6 +28,7 @@ import os
 import sys
 import pandas
 from sklearn.linear_model import LogisticRegression
+from tabulate import tabulate
 
 # globals
 REGR = ""
@@ -68,7 +69,21 @@ def analyze_results(folder):
     results = [
         csv_handler(os.path.join(folder, csv_file)) for csv_file in os.listdir(folder)
     ]
-    print(results)
+    headers = ["Class", "Count", "Percentage"]
+    data = [0, 0, 0, 0]
+    for result in results:
+        data[0] += result["a"]
+        data[1] += result["g"]
+        data[2] += result["n"]
+        data[3] += result["d"]
+    total = sum(data)
+    output = [
+        ["Appressoria", data[0], round(data[0] / total * 100, 1)],
+        ["Germinated", data[1], round(data[1] / total * 100, 1)],
+        ["Ungerminated", data[2], round(data[2] / total * 100, 1)],
+        ["Debris", data[3], round(data[3] / total * 100, 1)],
+    ]
+    print(tabulate(output, headers=headers))
 
 
 # handle csv datasets
@@ -76,9 +91,9 @@ def csv_handler(input_file):
     """Read CSV file produced by ImageJ and analyze each ROI using logistic regression."""
     image_data = {
         "a": 0,
-        "d": 0,
         "g": 0,
         "n": 0,
+        "d": 0,
     }
     # open csv file
     with open(
