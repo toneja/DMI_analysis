@@ -1,6 +1,9 @@
 // Macro to batch process a folder of images one at a time
 inputFolder = getArgument();
 
+// Get plate size from folder name
+plateSize = substring(inputFolder, lastIndexOf(inputFolder, "_") + 1);
+
 // Get a list of files in the input folder
 list = getFileList(inputFolder);
 
@@ -11,7 +14,7 @@ for (i = 0; i < list.length; i++) {
         open(inputFolder + "/" + list[i]);
         
         // Execute our main macro
-        runMacro("../DMI/AnalyzeSporesAndGermlings-35mm.ijm");
+        runMacro("../DMI/AnalyzeSporesAndGermlings.ijm", plateSize);
         
         // Close the image
         close();
