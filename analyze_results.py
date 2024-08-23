@@ -66,24 +66,40 @@ def identify_roi(row):
 
 def analyze_results(folder):
     """A descriptive docstring belongs here."""
+    args = os.path.basename(folder).split("_")
+    isolate = args[0]
+    treatment = args[1]
     results = [
         csv_handler(os.path.join(folder, csv_file)) for csv_file in os.listdir(folder)
     ]
-    headers = ["Class", "Count", "Percentage"]
-    data = [0, 0, 0, 0]
+    headers = ["Classification", "Count", "Percentage"]
+    counts = [0, 0, 0, 0]
     for result in results:
-        data[0] += result["a"]
-        data[1] += result["g"]
-        data[2] += result["n"]
-        data[3] += result["d"]
-    total = sum(data)
-    output = [
-        ["Appressoria", data[0], round(data[0] / total * 100, 1)],
-        ["Germinated", data[1], round(data[1] / total * 100, 1)],
-        ["Ungerminated", data[2], round(data[2] / total * 100, 1)],
-        ["Debris", data[3], round(data[3] / total * 100, 1)],
+        counts[0] += result["a"]
+        counts[1] += result["g"]
+        counts[2] += result["n"]
+        counts[3] += result["d"]
+    total = sum(counts)
+    output_data = [
+        ["Appressoria", counts[0], round(counts[0] / total * 100, 1)],
+        ["Germinated", counts[1], round(counts[1] / total * 100, 1)],
+        ["Ungerminated", counts[2], round(counts[2] / total * 100, 1)],
+        ["Debris", counts[3], round(counts[3] / total * 100, 1)],
     ]
-    print(tabulate(output, headers=headers))
+    # Write the results to the output file
+    with open(
+        f"results/FinalResults_{isolate}_{treatment}.csv",
+        "w",
+        encoding="utf-8",
+        newline="",
+    ) as csv_outfile:
+        csv_writer = csv.writer(csv_outfile)
+        csv_writer.writerow(headers)
+        for row in output_data:
+            csv_writer.writerow(row)
+    # Print a table of the results for the user
+    print(f"* Results for isolate {isolate.upper()} treated with {treatment.upper()}")
+    print(tabulate(output_data, headers=headers))
 
 
 # handle csv datasets
