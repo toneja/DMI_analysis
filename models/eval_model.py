@@ -42,7 +42,7 @@ def evaluate_predictive_model(csv_filename, num_runs=10):
     """Evaluate predictive model using logistic regression with feature selection."""
     # Load dataset from CSV file
     dataset = pd.read_csv(csv_filename)
-    dataset = dataset.drop(columns=["ID","Slice"])
+    dataset = dataset.drop(columns=["ID","X","Y","Slice"])
 
     # Prepare input features and output label
     output_label = "class"
