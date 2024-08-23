@@ -28,8 +28,7 @@ import os
 import sys
 import pandas
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 # globals
 REGR = ""
@@ -37,28 +36,16 @@ REGR = ""
 
 def setup_regression(model):
     """Setup the logistic regressions used to determine ROI identity."""
-    # Replace with multinomial logistic regression
-    # Use SAGA solver (??)
     dataset = pandas.read_csv(f"models/{model}_training_data.csv")
-    _x = dataset.iloc[:, :-1]   # Features (all columns except the last one)
-    _y = dataset.iloc[:, -1]    # Target variable (the last column)
+    _x = StandardScaler().fit_transform(
+        dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
+    )
+    _y = dataset["class"]
 
-    # split data into testing and training sets
-    X_train, X_test, y_train, y_test = train_test_split(_x, _y, test_size=0.5, random_state=None)
-
-    regression = LogisticRegression(multi_class="multinomial", solver="lbfgs", max_iter=1000)
-    regression.fit(X_train, y_train)
-
-    # make predictions on test data
-    y_pred = regression.predict(X_test)
-
-    # Eval the model
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-    print("\nAccuracy Score:")
-    print(accuracy_score(y_test, y_pred))
+    regression = LogisticRegression(
+        multi_class="multinomial", solver="lbfgs", max_iter=1000
+    )
+    regression.fit(_x, _y)
 
     return regression
 
@@ -66,8 +53,7 @@ def setup_regression(model):
 def analyze_results(folder):
     """A descriptive docstring belongs here."""
     results = [
-        csv_handler(os.path.join(folder, csv_file))
-        for csv_file in os.listdir(folder)
+        csv_handler(os.path.join(folder, csv_file)) for csv_file in os.listdir(folder)
     ]
     print(results)
 
