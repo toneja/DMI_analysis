@@ -31,10 +31,9 @@ import sys
 import pandas as pd
 import warnings
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 
@@ -63,28 +62,18 @@ def evaluate_predictive_model(csv_filename, num_runs=10):
     best_accuracy = 0.0
     best_feature_set = ""
 
-    # ignore some annoying warnings from the code below
-    warnings.filterwarnings(
-        "ignore", category=FutureWarning, module="sklearn.linear_model"
-    )
-
     for i in tqdm(range(num_runs), unit="tests"):
         # Split dataset into training and testing sets
         _x_train, _x_test, _y_train, _y_test = train_test_split(
             _x, _y, test_size=0.5, random_state=None
         )
 
-        # Apply StandardScaler
-        scaler = StandardScaler()
-        _x_train_scaled = scaler.fit_transform(_x_train)
-        _x_test_scaled = scaler.transform(_x_test)
-
         # Use stepwise feature selection to find the best set of features
-        logreg = LogisticRegression(multi_class="multinomial", solver="lbfgs", max_iter=1000)
+        logreg = LogisticRegression(solver="saga", max_iter=1000)
         sfs = SequentialFeatureSelector(logreg, n_features_to_select="auto")
-        sfs.fit(_x_train_scaled, _y_train)
-        _x_train_sfs = sfs.transform(_x_train_scaled)
-        _x_test_sfs = sfs.transform(_x_test_scaled)
+        sfs.fit(_x_train, _y_train)
+        _x_train_sfs = sfs.transform(_x_train)
+        _x_test_sfs = sfs.transform(_x_test)
 
         # Train a logistic regression model with selected features
         logreg.fit(_x_train_sfs, _y_train)

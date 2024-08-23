@@ -43,7 +43,6 @@ def compile_workbook(workbook_file, csv_files):
 
     # Add each new sheet to the workbook if it does not already exist
     for file in csv_files:
-        print(file)
         # Extract isolate name and treatment from filename
         file_parts = os.path.basename(file).split(".")[0].split("_")
         isolate_name = file_parts[0].upper()
