@@ -39,10 +39,8 @@ def setup_regression(model):
     dataset = pandas.read_csv(f"models/{model}_training_data.csv")
     _x = dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
     _y = dataset["class"]
-
     regression = LogisticRegression(solver="saga", max_iter=5000)
     regression.fit(_x.values, _y)
-
     return regression
 
 
@@ -88,7 +86,7 @@ def analyze_results(folder):
     ]
     # Write the results to the output file
     with open(
-        f"results/FinalResults_{isolate}_{treatment}.csv",
+        f"results/{isolate}_{treatment}.csv",
         "w",
         encoding="utf-8",
         newline="",

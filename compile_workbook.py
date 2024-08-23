@@ -43,10 +43,11 @@ def compile_workbook(workbook_file, csv_files):
 
     # Add each new sheet to the workbook if it does not already exist
     for file in csv_files:
+        print(file)
         # Extract isolate name and treatment from filename
-        file_parts = file.split(".")[0].split("_")
-        isolate_name = file_parts[1].upper()
-        treatment = file_parts[2].upper()
+        file_parts = os.path.basename(file).split(".")[0].split("_")
+        isolate_name = file_parts[0].upper()
+        treatment = file_parts[1].upper()
 
         # Create a new sheet in the workbook
         sheet_name = f"{isolate_name} ({treatment})"
@@ -104,7 +105,7 @@ def main():
         os.listdir("results"),
         key=lambda x: x.split("_")[1],
     ):
-        if not (file.endswith(".csv") and file.startswith("FinalResults_")):
+        if not (file.endswith(".csv")):
             continue
         file_path = os.path.join("results", file)
         csv_files.append(file_path)
