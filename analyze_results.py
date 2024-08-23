@@ -39,9 +39,7 @@ def setup_regression(model):
     _x = dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
     _y = dataset["class"]
 
-    regression = LogisticRegression(
-        multi_class="multinomial", solver="saga", max_iter = 5000,
-    )
+    regression = LogisticRegression(solver="saga", max_iter=5000)
     regression.fit(_x.values, _y)
 
     return regression
@@ -62,7 +60,7 @@ def identify_roi(row):
             ]
         ]
     )
-    print(f"{prediction}")
+    return prediction[0]
 
 
 def analyze_results(folder):
@@ -76,7 +74,12 @@ def analyze_results(folder):
 # handle csv datasets
 def csv_handler(input_file):
     """Read CSV file produced by ImageJ and analyze each ROI using logistic regression."""
-    image_data = 0
+    image_data = {
+        "a": 0,
+        "d": 0,
+        "g": 0,
+        "n": 0,
+    }
     # open csv file
     with open(
         input_file,
@@ -86,7 +89,7 @@ def csv_handler(input_file):
         # read csv as a dict so header is skipped and value lookup is simpler
         csv_reader = csv.DictReader(csv_file, delimiter=",")
         for row in csv_reader:
-            identify_roi(row)
+            image_data[identify_roi(row)] += 1
     return image_data
 
 
