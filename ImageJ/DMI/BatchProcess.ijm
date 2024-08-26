@@ -18,6 +18,9 @@ for (i = 0; i < list.length; i++) {
         
         // Close the image
         close();
+
+        // Clear the results table
+        run("Clear Results");
     }
 }
 

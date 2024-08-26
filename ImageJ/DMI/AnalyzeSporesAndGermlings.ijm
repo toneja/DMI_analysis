@@ -31,4 +31,3 @@ run("Set Measurements...", "area centroid perimeter fit shape feret's redirect=N
 run("Analyze Particles...", "size=minarea-2000 circularity=0.00-0.99 show=Overlay display exclude include add");
 roiManager("Show None");
 saveAs("Results", "DMI/results/" + File.getNameWithoutExtension(getTitle()) + ".csv");
-run("Clear Results");
