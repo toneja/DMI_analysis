@@ -26,40 +26,78 @@
 import csv
 import os
 import sys
+import numpy as np
 import pandas
-from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.utils import to_categorical
 from tabulate import tabulate
 
 # globals
-REGR = ""
+NNET = ""
 
 
-def setup_regression(model):
-    """Setup the logistic regressions used to determine ROI identity."""
-    dataset = pandas.read_csv(f"models/{model}_training_data.csv")
-    _x = dataset[["Perim.", "Major", "Minor", "Feret", "MinFeret", "Round", "Solidity"]]
+def setup_neural_network():
+    """Setup the neural network used to determine ROI identity."""
+    dataset = pandas.read_csv(f"models/appressoria_training_data.csv")
+    _x = dataset[
+        [
+            "Area",
+            "Perim.",
+            "Major",
+            "Minor",
+            "Circ.",
+            "Feret",
+            "MinFeret",
+            "AR",
+            "Round",
+            "Solidity",
+        ]
+    ]
     _y = dataset["class"]
-    regression = LogisticRegression(solver="saga", max_iter=5000)
-    regression.fit(_x.values, _y)
-    return regression
+    # Convert string labels to integer labels
+    label_encoder = LabelEncoder()
+    _y = label_encoder.fit_transform(_y)
+    # Convert the target variable to categorical (one-hot encoding)
+    # Necessary for neural network to handle multiple classes
+    _y = to_categorical(_y)
+    model = Sequential()
+    model.add(Input(shape=(_x.shape[1],)))
+    model.add(Dense(64, activation="relu"))
+    model.add(Dense(32, activation="relu"))
+    model.add(Dense(_y.shape[1], activation="softmax"))
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+    model.fit(_x, _y, epochs=100, batch_size=10, verbose=0)
+    return model
 
 
 def identify_roi(row):
     """A descriptive docstring belongs here."""
-    prediction = REGR.predict(
-        [
+    prediction = NNET.predict(
+        np.array(
             [
-                float(row["Perim."]),
-                float(row["Major"]),
-                float(row["Minor"]),
-                float(row["Feret"]),
-                float(row["MinFeret"]),
-                float(row["Round"]),
-                float(row["Solidity"]),
+                [
+                    float(row["Area"]),
+                    float(row["Perim."]),
+                    float(row["Major"]),
+                    float(row["Minor"]),
+                    float(row["Circ."]),
+                    float(row["Feret"]),
+                    float(row["MinFeret"]),
+                    float(row["AR"]),
+                    float(row["Round"]),
+                    float(row["Solidity"]),
+                ]
             ]
-        ]
+        ),
+        verbose=0,
     )
-    return prediction[0]
+    return prediction[0].argmax()
 
 
 def analyze_results(folder):
@@ -71,18 +109,19 @@ def analyze_results(folder):
         csv_handler(os.path.join(folder, csv_file)) for csv_file in os.listdir(folder)
     ]
     headers = ["Classification", "Count", "Percentage"]
+    # [a, d, g, n]
     counts = [0, 0, 0, 0]
     for result in results:
-        counts[0] += result["a"]
-        counts[1] += result["g"]
-        counts[2] += result["n"]
-        counts[3] += result["d"]
+        counts[0] += result[0]
+        counts[1] += result[1]
+        counts[2] += result[2]
+        counts[3] += result[3]
     total = sum(counts)
     output_data = [
         ["Appressoria", counts[0], round(counts[0] / total * 100, 1)],
-        ["Germinated", counts[1], round(counts[1] / total * 100, 1)],
-        ["Ungerminated", counts[2], round(counts[2] / total * 100, 1)],
-        ["Debris", counts[3], round(counts[3] / total * 100, 1)],
+        ["Germinated", counts[2], round(counts[2] / total * 100, 1)],
+        ["Ungerminated", counts[3], round(counts[3] / total * 100, 1)],
+        ["Debris", counts[1], round(counts[1] / total * 100, 1)],
     ]
     # Write the results to the output file
     with open(
@@ -103,12 +142,8 @@ def analyze_results(folder):
 # handle csv datasets
 def csv_handler(input_file):
     """Read CSV file produced by ImageJ and analyze each ROI using logistic regression."""
-    image_data = {
-        "a": 0,
-        "g": 0,
-        "n": 0,
-        "d": 0,
-    }
+    # [a, d, g, n]
+    image_data = [0, 0, 0, 0]
     # open csv file
     with open(
         input_file,
@@ -124,9 +159,9 @@ def csv_handler(input_file):
 
 def main(folder):
     """Execute the main objective."""
-    global REGR
+    global NNET
     os.chdir(os.path.dirname(__file__))
-    REGR = setup_regression("appressoria")
+    NNET = setup_neural_network()
     analyze_results(folder)
 
 
