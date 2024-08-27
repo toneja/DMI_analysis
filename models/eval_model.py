@@ -30,14 +30,18 @@ import os
 import sys
 import pandas as pd
 import warnings
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import SequentialFeatureSelector
-from tqdm import tqdm
+from sklearn.preprocessing import LabelEncoder
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.utils import to_categorical
 
 
-def evaluate_predictive_model(csv_filename, num_runs=10):
+def evaluate_predictive_model(csv_filename):
     """Evaluate predictive model using logistic regression with feature selection."""
     # Load dataset from CSV file
     dataset = pd.read_csv(csv_filename)
@@ -48,79 +52,54 @@ def evaluate_predictive_model(csv_filename, num_runs=10):
     _x = dataset.drop(output_label, axis=1)
     _y = dataset[output_label]
 
-    # Create an empty DataFrame to store the results
-    results_df = pd.DataFrame(
-        columns=[
-            "Selected Features",
-            "Accuracy",
-            "Precision",
-            "Recall",
-            "F1-score",
-        ]
+    # Convert string labels to integer labels
+    label_encoder = LabelEncoder()
+    _y = label_encoder.fit_transform(_y)
+
+    # Feature selection
+    _k = 10  # Select top 10 features
+    selector = SelectKBest(score_func=mutual_info_classif, k=_k)
+    _x_selected = selector.fit_transform(_x, _y)
+    selected_features = dataset.columns[selector.get_support(indices=True)]
+    print(f"Selected Features: {selected_features}")
+
+    # Convert the target variable to categorical (one-hot encoding)
+    # Necessary for neural network to handle multiple classes
+    _y = to_categorical(_y)
+
+    # Split dataset into training and testing sets
+    _x_train, _x_test, _y_train, _y_test = train_test_split(
+        _x_selected, _y, test_size=0.3, random_state=None
     )
 
-    best_accuracy = 0.0
-    best_feature_set = ""
+    # Build the neural network model
+    model = Sequential()
+    model.add(Dense(64, input_dim=_x_train.shape[1], activation="relu"))
+    model.add(Dense(32, activation="relu"))
+    model.add(Dense(_y.shape[1], activation="softmax"))
 
-    for i in tqdm(range(num_runs), unit="tests"):
-        # Split dataset into training and testing sets
-        _x_train, _x_test, _y_train, _y_test = train_test_split(
-            _x, _y, test_size=0.5, random_state=None
-        )
+    # Compile the model
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
-        # Use stepwise feature selection to find the best set of features
-        logreg = LogisticRegression(solver="saga", max_iter=1000)
-        sfs = SequentialFeatureSelector(logreg, n_features_to_select="auto")
-        sfs.fit(_x_train, _y_train)
-        _x_train_sfs = sfs.transform(_x_train)
-        _x_test_sfs = sfs.transform(_x_test)
+    # Train the model
+    model.fit(_x_train, _y_train, epochs=100, batch_size=10, verbose=1)
 
-        # Train a logistic regression model with selected features
-        logreg.fit(_x_train_sfs, _y_train)
+    # Eval the model
+    _y_pred = model.predict(_x_test, verbose=0)
+    _y_pred_classes = _y_pred.argmax(axis=1)
+    _y_test_classes = _y_test.argmax(axis=1)
 
-        # Evaluate model's accuracy on the testing set
-        accuracy = logreg.score(_x_test_sfs, _y_test)
-
-        # Predict labels for the testing set
-        y_pred = logreg.predict(_x_test_sfs)
-
-        # Calculate precision, recall, and F1-score
-        precision = precision_score(_y_test, y_pred, average="micro")
-        recall = recall_score(_y_test, y_pred, average="micro")
-        f1 = f1_score(_y_test, y_pred, average="micro")
-
-        # Store the results in the DataFrame
-        selected_features = ", ".join(_x.columns[sfs.get_support()])
-        results_df.loc[i] = [
-            selected_features,
-            accuracy,
-            precision,
-            recall,
-            f1,
-        ]
-
-        # Update the best feature set if the accuracy is higher
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            best_feature_set = selected_features
-
-    # Print the results
-    print(f"Results [{csv_filename}]:")
-    print(results_df.to_string())
-    print("\nAverage:")
-    print(results_df.iloc[:, 1:].mean().to_string())
-    print("\nBest Feature Set:")
-    print(f"{best_feature_set} @ {best_accuracy}")
-    print(
-        "--------------------------------------------------------------------------------------"
-    )
+    # Print the eval metrics
+    print("Confusion Matrix:")
+    print(confusion_matrix(_y_test_classes, _y_pred_classes))
+    print("\nClassification Report:")
+    print(classification_report(_y_test_classes, _y_pred_classes))
+    print("\nAccuracy Score:")
+    print(accuracy_score(_y_test_classes, _y_pred_classes))
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        if len(sys.argv) > 2:
-            evaluate_predictive_model(sys.argv[1], int(sys.argv[2]))
-        else:
-            evaluate_predictive_model(sys.argv[1])
+        evaluate_predictive_model(sys.argv[1])
     else:
         print("Please provide the CSV filename as an argument.")
