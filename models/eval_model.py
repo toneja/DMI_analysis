@@ -36,7 +36,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.utils import to_categorical
 
@@ -74,7 +74,8 @@ def evaluate_predictive_model(csv_filename):
 
     # Build the neural network model
     model = Sequential()
-    model.add(Dense(64, input_dim=_x_train.shape[1], activation="relu"))
+    model.add(Input(shape=(_x_train.shape[1],)))
+    model.add(Dense(64, activation="relu"))
     model.add(Dense(32, activation="relu"))
     model.add(Dense(_y.shape[1], activation="softmax"))
 
