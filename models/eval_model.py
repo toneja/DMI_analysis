@@ -90,13 +90,17 @@ def evaluate_predictive_model(csv_filename):
     _y_pred_classes = _y_pred.argmax(axis=1)
     _y_test_classes = _y_test.argmax(axis=1)
 
+    # Map predicted classes back to original labels
+    _y_pred_labels = label_encoder.inverse_transform(_y_pred_classes)
+    _y_test_labels = label_encoder.inverse_transform(_y_test.argmax(axis=1))
+
     # Print the eval metrics
     print("Confusion Matrix:")
-    print(confusion_matrix(_y_test_classes, _y_pred_classes))
+    print(confusion_matrix(_y_test_labels, _y_pred_labels))
     print("\nClassification Report:")
-    print(classification_report(_y_test_classes, _y_pred_classes))
+    print(classification_report(_y_test_labels, _y_pred_labels))
     print("\nAccuracy Score:")
-    print(accuracy_score(_y_test_classes, _y_pred_classes))
+    print(accuracy_score(_y_test_labels, _y_pred_labels))
 
 
 if __name__ == "__main__":
