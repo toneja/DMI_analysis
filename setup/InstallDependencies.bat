@@ -12,6 +12,7 @@ pip3.exe install pandas
 pip3.exe install scikit-learn
 pip3.exe install sklearn
 pip3.exe install tabulate
+pip3.exe install tensorflow
 pip3.exe install tqdm
 
 REM Set the download URL and destination file
